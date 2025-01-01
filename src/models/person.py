@@ -1,6 +1,6 @@
 from enum import Enum
 from datetime import datetime
-from random_id_generator import RandomIdGenerator
+from src.utils.random_id_generator import UniqueIDGenerator
 
 
 class PersonStatus(Enum):
@@ -17,7 +17,7 @@ class EntityStatus(Enum):
 
 class Person:
     def __init__(self, name: str, gender: str, national_code: str, status: PersonStatus, current_entity: str, entity_status: EntityStatus, daeth_date=None) -> None:
-        self.id = RandomIdGenerator.generate()
+        self.id = UniqueIDGenerator.generate_id()
         self.name = name
         self.gender = gender
         self.national_code = national_code

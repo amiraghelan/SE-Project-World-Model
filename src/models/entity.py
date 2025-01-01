@@ -1,10 +1,10 @@
 from datetime import datetime
-from random_id_generator import RandomIdGenerator
+from src.utils.random_id_generator import UniqueIDGenerator
 
 
 class Entity:
     def __init__(self, type: str, queue_capacity: int, max_capacity: int) -> None:
-        self.id = RandomIdGenerator.generate()
+        self.id = UniqueIDGenerator.generate_id()
         self.type = type.lower()
         self.queue_capacity = queue_capacity
         self.max_capacity = max_capacity
@@ -30,7 +30,7 @@ class Entity:
 
 class EntityAttributeValue:
     def __init__(self, entity_id: int, name: str, value):
-        self.id = RandomIdGenerator.generate()
+        self.id = UniqueIDGenerator.generate_id()
         self.entity_id = entity_id
         self.name = name.lower()
         self.value = value

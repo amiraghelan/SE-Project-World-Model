@@ -23,7 +23,7 @@ class WorldModel:
             EntityAttributeValue(entity_id, key, value) for key, value in eavs.items()
         ]
 
-        return entity_id
+        return entity_id, self.time_rate
 
     def sanpshot(self, entity_id: int) -> list:
         if not self.entity_exists(entity_id):

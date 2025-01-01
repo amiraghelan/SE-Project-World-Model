@@ -1,10 +1,10 @@
 from datetime import datetime
-from random_id_generator import RandomIdGenerator
+from src.utils.random_id_generator import UniqueIDGenerator
 
 
 class Log:
     def __init__(self, entity_id: int, description: str) -> None:
-        self.id = RandomIdGenerator.generate()
+        self.id = UniqueIDGenerator.generate_id()
         self.entity_id = entity_id
         self.creation_date = datetime.now()
         self.description = description

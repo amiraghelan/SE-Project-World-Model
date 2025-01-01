@@ -1,7 +1,7 @@
 import datetime
 from person import *
 from snapshot import Snapshot
-from entity import Entity, EntityAttributeValue
+from src.models.entity import Entity, EntityAttributeValue
 
 
 class WorldModel:

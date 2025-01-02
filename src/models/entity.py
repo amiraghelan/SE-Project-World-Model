@@ -3,9 +3,9 @@ from src.utils.random_id_generator import UniqueIDGenerator
 
 
 class Entity:
-    def __init__(self, type: str, max_capacity: int) -> None:
+    def __init__(self, entity_type: str, max_capacity: int) -> None:
         self.id = UniqueIDGenerator.generate_id()
-        self.type = type.lower()
+        self.entity_type = entity_type.lower()
         self.max_capacity = max_capacity
         self.used_capcity = 0
         self.creation_date = datetime.now()

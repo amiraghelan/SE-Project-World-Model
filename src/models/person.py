@@ -15,16 +15,19 @@ class EntityStatus(Enum):
     INLINE = 'inline'
     SERVICE = 'service'
     IDLE = 'idle'
+
+
 class Gender(Enum):
     MALE = 'male'
     FEMALE = 'female'
 
 
 class Person:
-    def __init__(self, name: str, gender: Gender, national_code: str, status: PersonStatus, current_entity: str, entity_status: EntityStatus, daeth_date=None) -> None:
+    def __init__(self, name: str, gender: Gender, birth_date: datetime, national_code: str, status: PersonStatus, current_entity: str, entity_status: EntityStatus, daeth_date=None) -> None:
         self.id = UniqueIDGenerator.generate_id()
         self.name = name
         self.gender = gender
+        self.birth_date = birth_date
         self.national_code = national_code
         self.status = status
         self.current_entity = current_entity
@@ -47,16 +50,16 @@ class Person:
 
     def changeEntityStatus(self, status: EntityStatus) -> None:
         self.entity_status = status
-    
+
     @staticmethod
-    def generateRandomPerson(): 
-        genders = list(Gender) 
-        gender = random.choice(genders) 
-        name = names.get_full_name(gender='male' if gender == 'Male' else 'female') 
-        national_code = str(random.randint(1000000000, 9999999999)) 
+    def generateRandomPerson():
+        genders = list(Gender)
+        gender = random.choice(genders)
+        name = names.get_full_name(gender='male' if gender == 'Male' else 'female')
+        national_code = str(random.randint(1000000000, 9999999999))
 
         return Person(name, gender, national_code, PersonStatus.ALIVE, 'city', EntityStatus.IDLE)
-    
+
     def __str__(self):
         return f" name: {self.name} \n geneder: {self.gender.value} \n natioanl code: {self.national_code} \n status: {self.status.value} \n entity: {self.current_entity} \n entity status: {self.entity_status.value}"
 

@@ -1,5 +1,5 @@
 from enum import Enum
-from datetime import datetime
+from datetime import datetime, timedelta
 import random
 import names
 from src.utils.random_id_generator import UniqueIDGenerator
@@ -58,10 +58,17 @@ class Person:
         name = names.get_full_name(gender='male' if gender == 'Male' else 'female')
         national_code = str(random.randint(1000000000, 9999999999))
 
-        return Person(name, gender, national_code, PersonStatus.ALIVE, 'city', EntityStatus.IDLE)
+        start_date = datetime(1960, 1, 1) 
+        end_date = datetime(2005, 12, 31) 
+        time_between_dates = end_date - start_date 
+        days_between_dates = time_between_dates.days 
+        random_number_of_days = random.randrange(days_between_dates) 
+        random_birth_date = start_date + timedelta(days=random_number_of_days)
+
+        return Person(name, gender, random_birth_date, national_code, PersonStatus.ALIVE, 'city', EntityStatus.IDLE)
 
     def __str__(self):
-        return f" name: {self.name} \n geneder: {self.gender.value} \n natioanl code: {self.national_code} \n status: {self.status.value} \n entity: {self.current_entity} \n entity status: {self.entity_status.value}"
+        return f" name: {self.name} \n geneder: {self.gender.value} \n birth date: {self.birth_date} \n natioanl code: {self.national_code} \n status: {self.status.value} \n entity: {self.current_entity} \n entity status: {self.entity_status.value}"
 
 
 class PersonLog:

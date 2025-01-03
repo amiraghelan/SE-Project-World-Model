@@ -14,8 +14,8 @@ class Entity:
     def get_id(self) -> int:
         return self.id
 
-    def change_used_capacity(self, change:int = 1) -> None:
-        self.used_capcity += change
+    def change_used_capacity(self, change: int = 1) -> None:
+        self.used_capacity += change
         self.last_modified_date = datetime.now()
 
     def update_max_capacity(self, new_value) -> None:

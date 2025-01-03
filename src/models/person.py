@@ -5,9 +5,6 @@ from src.utils.random_id_generator import UniqueIDGenerator
 from src.models.enums import Gender, EntityStatus, PersonStatus
 
 
-
-
-
 class Person:
     def __init__(self, name: str, gender: Gender, birth_date: datetime, national_code: str, status: PersonStatus, current_entity: str, entity_status: EntityStatus, death_date=None) -> None:
         self.id = UniqueIDGenerator.generate_id()
@@ -44,11 +41,11 @@ class Person:
         name = names.get_full_name(gender='male' if gender == 'Male' else 'female')
         national_code = str(random.randint(1000000000, 9999999999))
 
-        start_date = datetime(1960, 1, 1) 
-        end_date = datetime(2005, 12, 31) 
-        time_between_dates = end_date - start_date 
-        days_between_dates = time_between_dates.days 
-        random_number_of_days = random.randrange(days_between_dates) 
+        start_date = datetime(1960, 1, 1)
+        end_date = datetime(2005, 12, 31)
+        time_between_dates = end_date - start_date
+        days_between_dates = time_between_dates.days
+        random_number_of_days = random.randrange(days_between_dates)
         random_birth_date = start_date + timedelta(days=random_number_of_days)
 
         return Person(name, gender, random_birth_date, national_code, PersonStatus.ALIVE, 'city', EntityStatus.IDLE)

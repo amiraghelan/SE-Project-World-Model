@@ -19,7 +19,7 @@ class Log:
 class EntityLog(Log):
     def __init__(self, entity_id: int, changed_attribute: str, description: str) -> None:
         super().__init__(entity_id, description)
-        self.changed_attribute = self.changed_attribute
+        self.changed_attribute = changed_attribute
 
     def __str__(self):
         return (

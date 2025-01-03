@@ -138,6 +138,11 @@ class WorldModel:
             case _:
                 return []
 
+    def populate_woroldModel(self, persons_count: int =1):
+        for _ in range(persons_count):
+            person = Person.generateRandomPerson()
+            self.persons[person.id] = person
+    
     def personLog(self):
         pass
 

@@ -42,7 +42,7 @@ class WorldModel:
 
         for person_id in persons_id:
             self.persons[person_id].changeEntityStatus(EntityStatus.SERVICE)
-            
+
         entity = self.entities.get(entity_id)
         if entity is not None:
             entity.change_used_capacity(len(persons_id))
@@ -70,7 +70,7 @@ class WorldModel:
         entity = self.entities.get(entity_id)
         if entity is not None:
             entity.change_used_capacity(-1 * len(persons_id))
-            
+
         return True
 
     def update_self(self, entity_id: int, max_capacity: int, eavs: dict) -> bool:
@@ -90,6 +90,7 @@ class WorldModel:
 
         return True
 
+    # should check if only store or world model call can happen
     def person_injury(self, entity_id: int, persons_id: list) -> bool:
         if not self.entity_exists(entity_id) or not self.validate_persons_for_entity(entity_id, persons_id):
             return False
@@ -99,21 +100,21 @@ class WorldModel:
             person.injured()
             person.changeEntity('ecu')
             person.changeEntityStatus(EntityStatus.INLINE)
-        
+
         entity = self.entities.get(entity_id)
         if entity is not None:
             entity.change_used_capacity(-1 * len(persons_id))
-            
 
         return True
 
+    # should check if only hospital or police call can happen
     def person_death(self, entity_id: int, persons_id: list) -> bool:
         if not self.entity_exists(entity_id) or not self.validate_persons_for_entity(entity_id, persons_id):
             return False
 
         for person_id in persons_id:
             self.persons[person_id].die()
-        
+
         entity = self.entities.get(entity_id)
         if entity is not None:
             entity.change_used_capacity(-1 * len(persons_id))
@@ -159,22 +160,22 @@ class WorldModel:
             case _:
                 return []
 
-    def populate_woroldModel(self, persons_count: int =1):
+    def populate_woroldModel(self, persons_count: int = 1):
         for _ in range(persons_count):
             person = Person.generateRandomPerson()
             self.persons[person.id] = person
-    
+
     def fill_store_line(self, count: int = 1):
         persons = list(self.persons.values())
-        idle_persons = list(filter(lambda x:x.entity_status==EntityStatus.IDLE and x.current_entity=='city' ,persons))
+        idle_persons = list(filter(lambda x: x.entity_status == EntityStatus.IDLE and x.current_entity == 'city', persons))
         idle_persons_count = len(idle_persons)
 
         for _ in range(min(count, idle_persons_count)):
-            idle_persons = list(filter(lambda x:x.entity_status==EntityStatus.IDLE and x.current_entity=='city' ,persons))
+            idle_persons = list(filter(lambda x: x.entity_status == EntityStatus.IDLE and x.current_entity == 'city', persons))
             person = random.choice(idle_persons)
             person.changeEntity('store')
             person.changeEntityStatus(EntityStatus.INLINE)
-        
+
     def personLog(self):
         pass
 

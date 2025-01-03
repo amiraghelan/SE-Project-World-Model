@@ -4,7 +4,7 @@ from pydantic import BaseModel
 class RegisterBody(BaseModel):
     entity_type:str
     max_capacity:int
-    eav: dict[str, str|int]
+    eav: dict[str, str|int|dict|list]
     
 class AcceptPersonBody(BaseModel):
     entity_id:int

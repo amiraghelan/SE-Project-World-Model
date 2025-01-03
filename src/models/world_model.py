@@ -1,4 +1,5 @@
 from datetime import datetime
+import random
 
 from src.models.person import Person
 from src.models.snapshot import Snapshot
@@ -143,6 +144,17 @@ class WorldModel:
             person = Person.generateRandomPerson()
             self.persons[person.id] = person
     
+    def fill_store_line(self, count: int = 1):
+        persons = list(self.persons.values())
+        idle_persons = list(filter(lambda x:x.entity_status==EntityStatus.IDLE and x.current_entity=='city' ,persons))
+        idle_persons_count = len(idle_persons)
+
+        for _ in range(min(count, idle_persons_count)):
+            idle_persons = list(filter(lambda x:x.entity_status==EntityStatus.IDLE and x.current_entity=='city' ,persons))
+            person = random.choice(idle_persons)
+            person.changeEntity('store')
+            person.changeEntityStatus(EntityStatus.INLINE)
+        
     def personLog(self):
         pass
 

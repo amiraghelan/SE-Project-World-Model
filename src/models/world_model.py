@@ -42,6 +42,10 @@ class WorldModel:
 
         for person_id in persons_id:
             self.persons[person_id].changeEntityStatus(EntityStatus.SERVICE)
+            
+        entity = self.entities.get(entity_id)
+        if entity is not None:
+            entity.change_used_capacity(len(persons_id))
 
         return True
 
@@ -63,6 +67,10 @@ class WorldModel:
                     person.changeEntityStatus(EntityStatus.IDLE)
                     person.changeEntity('city')
 
+        entity = self.entities.get(entity_id)
+        if entity is not None:
+            entity.change_used_capacity(-1 * len(persons_id))
+            
         return True
 
     def update_self(self, entity_id: int, max_capacity: int, eavs: dict) -> bool:
@@ -87,7 +95,15 @@ class WorldModel:
             return False
 
         for person_id in persons_id:
-            self.persons[person_id].injured()
+            person = self.persons[person_id]
+            person.injured()
+            person.changeEntity('ecu')
+            person.changeEntityStatus(EntityStatus.INLINE)
+        
+        entity = self.entities.get(entity_id)
+        if entity is not None:
+            entity.change_used_capacity(-1 * len(persons_id))
+            
 
         return True
 
@@ -97,6 +113,10 @@ class WorldModel:
 
         for person_id in persons_id:
             self.persons[person_id].die()
+        
+        entity = self.entities.get(entity_id)
+        if entity is not None:
+            entity.change_used_capacity(-1 * len(persons_id))
 
         return True
 

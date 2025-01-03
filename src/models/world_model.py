@@ -25,7 +25,7 @@ class WorldModel:
 
         return entity_id, self.time_rate
 
-    def sanpshot(self, entity_id: int) -> list:
+    def snapshot(self, entity_id: int) -> list:
         if not self.entity_exists(entity_id):
             return Snapshot(entity_id, [], self.earthquake)
 
@@ -67,7 +67,7 @@ class WorldModel:
 
         return True
 
-    def person_injery(self, entity_id: int, persons_id: list) -> bool:
+    def person_injury(self, entity_id: int, persons_id: list) -> bool:
         if not self.entity_exists(entity_id) and not self.validate_persons_for_entity(entity_id, person_id):
             return False
 

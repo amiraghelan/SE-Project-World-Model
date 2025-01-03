@@ -23,7 +23,7 @@ class Gender(Enum):
 
 
 class Person:
-    def __init__(self, name: str, gender: Gender, birth_date: datetime, national_code: str, status: PersonStatus, current_entity: str, entity_status: EntityStatus, daeth_date=None) -> None:
+    def __init__(self, name: str, gender: Gender, birth_date: datetime, national_code: str, status: PersonStatus, current_entity: str, entity_status: EntityStatus, death_date=None) -> None:
         self.id = UniqueIDGenerator.generate_id()
         self.name = name
         self.gender = gender
@@ -33,7 +33,7 @@ class Person:
         self.current_entity = current_entity
         self.entity_status = entity_status
         self.creation_date = datetime.now()
-        self.daeth_date = daeth_date
+        self.death_date = death_date
 
     def heal(self) -> None:
         self.status = PersonStatus.ALIVE
@@ -43,7 +43,7 @@ class Person:
 
     def die(self) -> None:
         self.status = PersonStatus.DEAD
-        self.daeth_date = datetime.now()
+        self.death_date = datetime.now()
 
     def changeEntity(self, destination: str) -> None:
         self.current_entity = destination
@@ -68,7 +68,7 @@ class Person:
         return Person(name, gender, random_birth_date, national_code, PersonStatus.ALIVE, 'city', EntityStatus.IDLE)
 
     def __str__(self):
-        return f" name: {self.name} \n geneder: {self.gender.value} \n birth date: {self.birth_date} \n natioanl code: {self.national_code} \n status: {self.status.value} \n entity: {self.current_entity} \n entity status: {self.entity_status.value}"
+        return f" name: {self.name} \n gender: {self.gender.value} \n birth date: {self.birth_date} \n national code: {self.national_code} \n status: {self.status.value} \n entity: {self.current_entity} \n entity status: {self.entity_status.value}"
 
 
 class PersonLog:

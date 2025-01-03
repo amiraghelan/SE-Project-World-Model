@@ -8,7 +8,7 @@ class Entity:
         self.type = type.lower()
         self.queue_capacity = queue_capacity
         self.max_capacity = max_capacity
-        self.used_capcity = 0
+        self.used_capacity = 0
         self.creation_date = datetime.now()
         self.last_modified_date = self.creation_date
 
@@ -16,7 +16,7 @@ class Entity:
         return self.id
 
     def increase_used_capacity(self) -> None:
-        self.used_capcity += 1
+        self.used_capacity += 1
         self.last_modified_date = datetime.now()
 
     def update_queue_capacity(self, value) -> None:

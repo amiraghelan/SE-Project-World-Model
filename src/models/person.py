@@ -1,25 +1,11 @@
-from enum import Enum
 from datetime import datetime, timedelta
 import random
 import names
 from src.utils.random_id_generator import UniqueIDGenerator
+from src.models.enums import Gender, EntityStatus, PersonStatus
 
 
-class PersonStatus(Enum):
-    ALIVE = 'alive'
-    INJURED = 'injured'
-    DEAD = 'dead'
 
-
-class EntityStatus(Enum):
-    INLINE = 'inline'
-    SERVICE = 'service'
-    IDLE = 'idle'
-
-
-class Gender(Enum):
-    MALE = 'male'
-    FEMALE = 'female'
 
 
 class Person:

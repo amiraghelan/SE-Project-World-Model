@@ -64,25 +64,6 @@ class WorldModel:
 
         return True
 
-    def service_done(self, entity_id: int, person_id: int) -> bool:
-        entity = self.entity_exists(entity_id)
-        if not entity or not self.validate_persons_for_entity(entity_id, [person_id]):
-            return False
-
-        person = self.persons[person_id]
-        match entity.entity_type:
-            case 'ecu':
-                person.changeEntityStatus(EntityStatus.INLINE)
-                person.changeEntity('hospital')
-            case 'hospital':
-                person.changeEntityStatus(EntityStatus.IDLE)
-                person.changeEntity('city')
-            case 'store':
-                person.changeEntityStatus(EntityStatus.IDLE)
-                person.changeEntity('city')
-
-        return True
-
     def update_self(self, entity_id: int, max_capacity: int, eavs: dict) -> bool:
         entity = self.entity_exists(entity_id)
         if not entity:

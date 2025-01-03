@@ -23,13 +23,13 @@ class WorldModel:
 
         self.entities[entity_id] = entity
 
-        self.eavs[entity_id] =  eavs
-       
+        self.eavs[entity_id] = eavs
+
         print("new entity registered: ")
         print(entity)
         for e in self.eavs[entity_id]:
             print(e)
-            
+
         return {"entity_id": entity_id, "time_rate": self.time_rate}
 
     def snapshot(self, entity_id: int) -> Snapshot:
@@ -100,7 +100,7 @@ class WorldModel:
 
         for person_id in persons_id:
             person = self.persons[person_id]
-            person.injured()
+            person.injure()
             person.changeEntity('ecu')
             person.changeEntityStatus(EntityStatus.INLINE)
 
@@ -163,7 +163,7 @@ class WorldModel:
             case _:
                 return []
 
-    def populate_woroldModel(self, persons_count: int = 1):
+    def populate_worldModel(self, persons_count: int = 1):
         for _ in range(persons_count):
             person = Person.generateRandomPerson()
             self.persons[person.id] = person

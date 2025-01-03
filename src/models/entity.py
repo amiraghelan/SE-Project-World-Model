@@ -11,9 +11,6 @@ class Entity:
         self.creation_date = datetime.now()
         self.last_modified_date = self.creation_date
 
-    def get_id(self) -> int:
-        return self.id
-
     def change_used_capacity(self, change: int = 1) -> None:
         self.used_capacity += change
         self.last_modified_date = datetime.now()
@@ -25,10 +22,16 @@ class Entity:
     @classmethod
     def from_dict(cls, data):
         return cls(data['entity_type'], data['max_capacity'])
-    
-    def __str__(self):
-        return f"entity_type: {self.entity_type} - entity_id: {self.id} - max_cap: {self.max_capacity}"
-        
+
+    def __str__(self) -> str:
+        return (
+            f"Entity Type: {self.entity_type}\n"
+            f"Entity ID: {self.id}\n"
+            f"Max Capacity: {self.max_capacity}\n"
+            f"Used Capacity: {self.used_capacity}\n"
+            f"Creation Date: {self.creation_date.strftime('%Y-%m-%d %H:%M:%S')}\n"
+            f"Last Modified Date: {self.last_modified_date.strftime('%Y-%m-%d %H:%M:%S')}"
+        )
 
 
 class EntityAttributeValue:
@@ -44,7 +47,11 @@ class EntityAttributeValue:
     @classmethod
     def from_dict(cls, data):
         return cls(data['entity_id'], data['name'], data['value'])
-    
-    def __str__(self):
-        return str(vars(self))
-        
+
+    def __str__(self) -> str:
+        return (
+            f"Attribute ID: {self.id}\n"
+            f"Entity ID: {self.entity_id}\n"
+            f"Name: {self.name}\n"
+            f"Value: {self.value}"
+        )

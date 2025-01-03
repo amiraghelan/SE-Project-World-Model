@@ -21,7 +21,7 @@ class Person:
     def heal(self) -> None:
         self.status = PersonStatus.ALIVE
 
-    def injured(self) -> None:
+    def injure(self) -> None:
         self.status = PersonStatus.INJURED
 
     def die(self) -> None:
@@ -50,8 +50,19 @@ class Person:
 
         return Person(name, gender, random_birth_date, national_code, PersonStatus.ALIVE, 'city', EntityStatus.IDLE)
 
-    def __str__(self):
-        return f" name: {self.name} \n gender: {self.gender.value} \n birth date: {self.birth_date} \n national code: {self.national_code} \n status: {self.status.value} \n entity: {self.current_entity} \n entity status: {self.entity_status.value}"
+    def __str__(self) -> str:
+        return (
+            f"Person ID: {self.id}\n"
+            f"Name: {self.name}\n"
+            f"Gender: {self.gender.name}\n"
+            f"Birth Date: {self.birth_date.strftime('%Y-%m-%d')}\n"
+            f"National Code: {self.national_code}\n"
+            f"Status: {self.status.name}\n"
+            f"Current Entity: {self.current_entity}\n"
+            f"Entity Status: {self.entity_status.name}\n"
+            f"Creation Date: {self.creation_date.strftime('%Y-%m-%d %H:%M:%S')}\n"
+            f"Death Date: {self.death_date.strftime('%Y-%m-%d %H:%M:%S') if self.death_date else 'N/A'}"
+        )
 
 
 class PersonLog:

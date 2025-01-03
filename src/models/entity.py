@@ -25,6 +25,10 @@ class Entity:
     @classmethod
     def from_dict(cls, data):
         return cls(data['entity_type'], data['max_capacity'])
+    
+    def __str__(self):
+        return f"entity_type: {self.entity_type} - entity_id: {self.id} - max_cap: {self.max_capacity}"
+        
 
 
 class EntityAttributeValue:
@@ -40,3 +44,7 @@ class EntityAttributeValue:
     @classmethod
     def from_dict(cls, data):
         return cls(data['entity_id'], data['name'], data['value'])
+    
+    def __str__(self):
+        return str(vars(self))
+        

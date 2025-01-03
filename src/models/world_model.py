@@ -17,15 +17,19 @@ class WorldModel:
         self.persons: dict[int, Person] = dict()
         self.start_date = datetime.now()
 
-    def register(self, entity_type: str, max_capacity: int, eavs: dict) -> dict:
+    def register(self, entity_type: str, max_capacity: int, eavs: list[EntityAttributeValue]) -> dict:
         entity = Entity(entity_type, max_capacity)
         entity_id = entity.get_id()
 
         self.entities[entity_id] = entity
 
-        self.eavs[entity_id] = [
-            EntityAttributeValue(entity_id, key, value) for key, value in eavs.items()
-        ]
+        self.eavs[entity_id] =  eavs
+       
+        print("new entity registered: ")
+        print(entity)
+        for e in self.eavs[entity_id]:
+            print(e)
+            
         return {"entity_id": entity_id, "time_rate": self.time_rate}
 
     def snapshot(self, entity_id: int) -> Snapshot:
@@ -73,7 +77,7 @@ class WorldModel:
 
         return True
 
-    def update_self(self, entity_id: int, max_capacity: int, eavs: dict) -> bool:
+    def update_self(self, entity_id: int, max_capacity: int, eavs: list[EntityAttributeValue]) -> bool:
         entity = self.entity_exists(entity_id)
         if not entity:
             return False
@@ -85,8 +89,7 @@ class WorldModel:
 
         entity.update_max_capacity(max_capacity)
 
-        eav = [EntityAttributeValue(entity_id, key, value)
-               for key, value in eavs.items()]
+        eav = eavs
 
         return True
 

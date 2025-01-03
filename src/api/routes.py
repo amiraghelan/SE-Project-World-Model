@@ -1,67 +1,57 @@
-from flask import Blueprint, jsonify, request
 from src.models.world_model import WorldModel
 from src.models.entity import Entity, EntityAttributeValue
+from src.api.schemas import RegisterBody, AcceptPersonBody, ServiceDoneBody, UpdateSelfBody, PersonDeathBody, PersonInjuryBody
 
-api = Blueprint('api', __name__)
+from fastapi import APIRouter, Request
+
 world_model = WorldModel(100)
+world_model.populate_woroldModel(12)
+world_model.fill_store_line(5)
+router = APIRouter()
 
 
-@api.route('/api/register', methods=['POST'])
-def register():
-    data = request.json
-
-    entity = Entity.from_dict(data)
-    eavs = dict()
-    for name, value in data['eav'].items():
-        eav = EntityAttributeValue.from_dict({"entity_id": entity.id, "name": name, "value": value})
-        eavs[eav.id] = eav
+@router.post('/api/register')
+async def register(req: Request, body:RegisterBody):
+    entity = Entity.from_dict(body.model_dump())
+    eavs = []
+    for name, value in body.eav.items():
+        eav = EntityAttributeValue(entity_id=entity.id, name=str(name), value=value)
+        eavs.append(eav)
 
     response = world_model.register(entity.entity_type, entity.max_capacity, eavs)
-    return jsonify(response, status=200, mimetype='application/json')
+    return response
+
+@router.get('/api/snapshot/{entity_id}')
+def snapshot(entity_id:int):
+    response = world_model.snapshot(entity_id=entity_id)
+    return response
+
+@router.post('/api/accept-person')
+def accept_person(body:AcceptPersonBody):
+    response = world_model.accept_person(body.entity_id,body.persons_id)
+    return response
+
+@router.post('/api/service-done')
+def service_done(body:ServiceDoneBody):
+    response = world_model.service_done(body.entity_id,body.persons_id)
+    return response
+
+@router.put('/api/update-self')
+def update_self(body:UpdateSelfBody):
+    eavs = []
+    for name, value in body.eav.items():
+        eav = EntityAttributeValue(entity_id=body.entity_id, name=str(name), value=value)
+        eavs.append(eav)
+    response = world_model.update_self(body.entity_id, body.max_capacity, eavs)
+    return response
+
+@router.post('/api/person-injury')
+def person_injury(body: PersonInjuryBody):
+    response = world_model.person_injury(body.entity_id, body.persons_id)
+    return response
 
 
-@api.route('/api/snapshot', methods=['GET'])
-def snapshot():
-    data = request.json
-    response = world_model.snapshot(data['entity_id'])
-    return jsonify(response.to_dict(), status=200, mimetype='application/json')
-
-
-@api.route('/api/accept-person', methods=['POST'])
-def accept_person():
-    data = request.json
-    response = world_model.accept_person(data['entity_id'], data['persons_id'])
-    return jsonify({"occur": response}, status=200, mimetype='application/json')
-
-
-@api.route('/api/service-done', methods=['POST'])
-def service_done():
-    data = request.json
-    response = world_model.service_done(data['entity_id'], data['persons_id'])
-    return jsonify({"occur": response}, status=200, mimetype='application/json')
-
-
-@api.route('/api/update-self', methods=['PUT'])
-def update_self():
-    data = request.json
-    response = world_model.update_self(data['entity_id'], data['max_capacity'], data['eavs'])
-    return jsonify({"occur": response}, status=200, mimetype='application/json')
-
-
-@api.route('/api/log', methods=['POST'])
-def log():
-    pass
-
-
-@api.route('/api/person-injury', methods=['POST'])
-def person_injury():
-    data = request.json
-    response = world_model.person_injury(data['entity_id'], data['persons_id'])
-    return jsonify({"occur": response}, status=200, mimetype='application/json')
-
-
-@api.route('/api/person-death', methods=['POST'])
-def person_death():
-    data = request.json
-    response = world_model.person_death(data['entity_id'], data['persons_id'])
-    return jsonify({"occur": response}, status=200, mimetype='application/json')
+@router.post('/api/person-death')
+def person_death(body: PersonDeathBody):
+    response = world_model.person_death(body.entity_id, body.persons_id)
+    return response

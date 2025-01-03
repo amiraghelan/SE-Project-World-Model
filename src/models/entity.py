@@ -22,6 +22,10 @@ class Entity:
         self.max_capacity = new_value
         self.last_modified_date = datetime.now()
 
+    @classmethod
+    def from_dict(cls, data):
+        return cls(data['entity_type'], data['max_capacity'])
+
 
 class EntityAttributeValue:
     def __init__(self, entity_id: int, name: str, value):
@@ -32,3 +36,7 @@ class EntityAttributeValue:
 
     def update_value(self, value) -> None:
         self.value = value
+
+    @classmethod
+    def from_dict(cls, data):
+        return cls(data['entity_id'], data['name'], data['value'])

@@ -19,7 +19,7 @@ class WorldModel:
 
     def register(self, entity_type: str, max_capacity: int, eavs: list[EntityAttributeValue]) -> dict:
         entity = Entity(entity_type, max_capacity)
-        entity_id = entity.get_id()
+        entity_id = entity.id
 
         self.entities[entity_id] = entity
 

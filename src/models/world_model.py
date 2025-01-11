@@ -176,6 +176,16 @@ class WorldModel:
             person.changeEntity('store')
             person.changeEntityStatus(EntityStatus.INLINE)
 
+    def fill_hospital_line(self, count: int = 1):
+        persons = list(self.persons.values())
+        idle_persons = list(filter(lambda x: x.entity_status == EntityStatus.IDLE and x.current_entity == 'city', persons))
+        idle_persons_count = len(idle_persons)
+
+        for _ in range(min(count, idle_persons_count)):
+            person = random.choice(idle_persons)
+            person.changeEntity('hospital')
+            person.changeEntityStatus(EntityStatus.INLINE)
+
     def personLog(self):
         pass
 

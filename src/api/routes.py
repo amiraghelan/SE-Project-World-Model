@@ -6,6 +6,7 @@ from fastapi import APIRouter, Request
 world_model = WorldModel(100)
 world_model.populate_worldModel(12)
 world_model.fill_store_line(5)
+world_model.fill_hospital_line(2)
 router = APIRouter()
 
 # we should migrate all logic to business service
@@ -18,7 +19,7 @@ async def register(body: RegisterBody):
     return response
 
 
-@router.get('/api/snapshot/{entity_id}')
+@router.get('/api/snapshot')
 def snapshot(entity_id: int):
     response = world_model.snapshot(entity_id=entity_id)
     return response

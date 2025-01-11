@@ -1,12 +1,13 @@
-from src.utils.random_id_generator import UniqueIDGenerator
+from src.models.base_model import BaseEntity
+from src.models.person import Person
 
 
-class Snapshot:
-    def __init__(self, entity_id: int, persons: list, earthquake_status: bool) -> None:
-        self.id = UniqueIDGenerator.generate_id()
-        self.entity_id = entity_id
-        self.persons = persons
-        self.earthquake_status = earthquake_status
+class Snapshot(BaseEntity):
+    def __init__(self, entity_id: int, persons: list[Person], earthquake_status: bool) -> None:
+        super().__init__()
+        self.entity_id: int = entity_id
+        self.persons: list[Person] = persons
+        self.earthquake_status: bool = earthquake_status
 
     def to_dict(self):
         return {

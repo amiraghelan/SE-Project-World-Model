@@ -17,18 +17,18 @@ class WorldModel:
         self.persons: dict[int, Person] = dict()
         self.start_date = datetime.now()
 
-    def register(self, entity_type: str, max_capacity: int, eavs: list[EntityAttributeValue]) -> dict:
+    def register(self, entity_type: str, max_capacity: int, eav: dict[str, str | int | dict | list]) -> dict:
         entity = Entity(entity_type, max_capacity)
         entity_id = entity.id
 
         self.entities[entity_id] = entity
+        self.eavs[entity_id] = [EntityAttributeValue(entity.id, name, value) for name, value in eav.items()]
 
-        self.eavs[entity_id] = eavs
-
-        print("new entity registered: ")
+        print("Entity registered: ")
         print(entity)
-        for e in self.eavs[entity_id]:
-            print(e)
+        print("Entity Attribute Values: ")
+        for eav in self.eavs[entity_id]:
+            print(eav)
 
         return {"entity_id": entity_id, "time_rate": self.time_rate}
 
@@ -77,19 +77,17 @@ class WorldModel:
 
         return True
 
-    def update_self(self, entity_id: int, max_capacity: int, eavs: list[EntityAttributeValue]) -> bool:
+    def update_self(self, entity_id: int, max_capacity: int, eav: dict[str, str | int | dict | list]) -> bool:
         entity = self.entity_exists(entity_id)
         if not entity:
             return False
 
-        eav = self.eavs.get(entity_id)
-
-        if not eav:
+        if not self.eavs.get(entity_id):
             return False
 
         entity.update_max_capacity(max_capacity)
 
-        eav = eavs
+        self.eavs[entity_id] = [EntityAttributeValue(entity.id, name, value) for name, value in eav.items()]
 
         return True
 
@@ -174,7 +172,6 @@ class WorldModel:
         idle_persons_count = len(idle_persons)
 
         for _ in range(min(count, idle_persons_count)):
-            idle_persons = list(filter(lambda x: x.entity_status == EntityStatus.IDLE and x.current_entity == 'city', persons))
             person = random.choice(idle_persons)
             person.changeEntity('store')
             person.changeEntityStatus(EntityStatus.INLINE)

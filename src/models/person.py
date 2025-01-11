@@ -1,13 +1,13 @@
 from datetime import datetime, timedelta
 import random
 import names
-from src.utils.random_id_generator import UniqueIDGenerator
+from src.models.base_model import BaseEntity
 from src.models.enums import Gender, EntityStatus, PersonStatus
 
 
-class Person:
+class Person(BaseEntity):
     def __init__(self, name: str, gender: Gender, birth_date: datetime, national_code: str, status: PersonStatus, current_entity: str, entity_status: EntityStatus, death_date=None) -> None:
-        self.id = UniqueIDGenerator.generate_id()
+        super().__init__()
         self.name = name
         self.gender = gender
         self.birth_date = birth_date
@@ -15,24 +15,28 @@ class Person:
         self.status = status
         self.current_entity = current_entity
         self.entity_status = entity_status
-        self.creation_date = datetime.now()
         self.death_date = death_date
 
     def heal(self) -> None:
         self.status = PersonStatus.ALIVE
+        self.modified_date = datetime.now()
 
     def injure(self) -> None:
         self.status = PersonStatus.INJURED
+        self.modified_date = datetime.now()
 
     def die(self) -> None:
         self.status = PersonStatus.DEAD
         self.death_date = datetime.now()
+        self.modified_date = datetime.now()
 
     def changeEntity(self, destination: str) -> None:
         self.current_entity = destination
+        self.modified_date = datetime.now()
 
     def changeEntityStatus(self, status: EntityStatus) -> None:
         self.entity_status = status
+        self.modified_date = datetime.now()
 
     @staticmethod
     def generateRandomPerson():
@@ -61,6 +65,7 @@ class Person:
             f"Current Entity: {self.current_entity}\n"
             f"Entity Status: {self.entity_status.name}\n"
             f"Creation Date: {self.creation_date.strftime('%Y-%m-%d %H:%M:%S')}\n"
+            f"Modified Date: {self.modified_date.strftime('%Y-%m-%d %H:%M:%S')}\n"
             f"Death Date: {self.death_date.strftime('%Y-%m-%d %H:%M:%S') if self.death_date else 'N/A'}"
         )
 

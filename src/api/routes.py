@@ -1,5 +1,4 @@
 from src.models.world_model import WorldModel
-from src.models.entity import Entity, EntityAttributeValue
 from src.api.schemas import RegisterBody, AcceptPersonBody, ServiceDoneBody, UpdateSelfBody, PersonDeathBody, PersonInjuryBody
 
 from fastapi import APIRouter, Request
@@ -9,16 +8,13 @@ world_model.populate_worldModel(12)
 world_model.fill_store_line(5)
 router = APIRouter()
 
+# we should migrate all logic to business service
+# create entity and entity attribute value here is not good practice
+
 
 @router.post('/api/register')
-async def register(req: Request, body: RegisterBody):
-    entity = Entity.from_dict(body.model_dump())
-    eavs = []
-    for name, value in body.eav.items():
-        eav = EntityAttributeValue(entity_id=entity.id, name=str(name), value=value)
-        eavs.append(eav)
-
-    response = world_model.register(entity.entity_type, entity.max_capacity, eavs)
+async def register(body: RegisterBody):
+    response = world_model.register(body.entity_type, body.max_capacity, body.eav)
     return response
 
 
@@ -42,11 +38,7 @@ def service_done(body: ServiceDoneBody):
 
 @router.put('/api/update-self')
 def update_self(body: UpdateSelfBody):
-    eavs = []
-    for name, value in body.eav.items():
-        eav = EntityAttributeValue(entity_id=body.entity_id, name=str(name), value=value)
-        eavs.append(eav)
-    response = world_model.update_self(body.entity_id, body.max_capacity, eavs)
+    response = world_model.update_self(body.entity_id, body.max_capacity, body.eav)
     return response
 
 

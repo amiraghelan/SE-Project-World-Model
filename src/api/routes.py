@@ -31,6 +31,7 @@ def get_world_model(request: Request) -> WorldModel:
 async def register(
     world_model: Annotated[WorldModel, Depends(get_world_model)], body: RegisterBody
 ):
+    logger.info(f"new register request - entity_type: {body.entity_type}")
     response = world_model.register(body.entity_type, body.max_capacity, body.eav)
 
     return response
@@ -39,9 +40,11 @@ async def register(
 @router.get("/api/snapshot/{entity_id}")
 def snapshot(
     world_model: Annotated[WorldModel, Depends(get_world_model)], entity_id: int
-):
+):  
+    logger.info(f"new snapshot request - entity_id: {entity_id}")
     response = world_model.snapshot(entity_id=entity_id)
     if not response:
+        logger.error(f"in snapshot api: entity_id was not found - id:{entity_id}")
         return JSONResponse({"message": "entity does not exist in the worldmodel"}, 404)
 
     return response
@@ -51,6 +54,7 @@ def snapshot(
 def accept_person(
     world_model: Annotated[WorldModel, Depends(get_world_model)], body: AcceptPersonBody
 ):
+    logger.info(f"new accpet-person request - entity_id: {body.entity_id} - persons_id: {body.persons_id}")
     response = world_model.accept_person(body.entity_id, body.persons_id)
     return response
 

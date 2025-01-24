@@ -5,8 +5,9 @@ from src.models.person import Person
 from src.models.snapshot import Snapshot
 from src.models.entity import Entity, EntityAttributeValue
 from src.models.enums import EntityStatus, PersonStatus
+from src.utils.logger import get_logger
 
-
+logger = get_logger(__name__)
 class WorldModel:
     def __init__(self, time_rate: int = 1) -> None:
         self.time_rate = time_rate
@@ -32,12 +33,7 @@ class WorldModel:
             EntityAttributeValue(entity.id, name, value) for name, value in eav.items()
         ]
 
-        # TODO log entity Registeration
-        # print("Entity registered: ")
-        # print(entity)
-        # print("Entity Attribute Values: ")
-        # for e in self.eavs[entity_id]:
-        #     print(e)
+        logger.info(f"new entity regitered - entity_type: {entity_type} - max-cap: {max_capacity} - id: {entity_id}")
 
         return {"entity_id": entity_id, "time_rate": self.time_rate}
 
@@ -75,7 +71,7 @@ class WorldModel:
 
         if not entity:
             return False
-
+        
         return Snapshot(
             entity_id, self.match_snapshot_persons(entity), self.earthquake_status
         )
@@ -95,6 +91,7 @@ class WorldModel:
     def accept_person(self, entity_id: int, persons_id: list) -> dict[str, list[int]]:
         entity = self.entity_exists(entity_id=entity_id)
         if not entity:
+            logger.error(f"in accept-person: entity not found - entity_id: {entity_id}")
             return {"accepted": [], "rejected": persons_id}
 
         accepted_persons = []
@@ -110,7 +107,7 @@ class WorldModel:
                 rejected_persons.append(person_id)
                 
         entity.change_used_capacity(len(accepted_persons))
-
+        logger.info(f"in accept-person: entity_id: {entity_id} - accepteds: {accepted_persons} - rejecteds: {rejected_persons}")
         return {"accepted": accepted_persons, "rejected": rejected_persons}
     #=============================================================================
     
@@ -129,6 +126,7 @@ class WorldModel:
     def service_done(self, entity_id: int, persons_id: list) -> dict[str, list[int]]:
         entity = self.entity_exists(entity_id)
         if not entity:
+            logger.error(f"in service_done: entity not found - entity_id: {entity_id}")
             return {"accepted": [], "rejected": persons_id}
 
         accepted_persons = []
@@ -152,6 +150,7 @@ class WorldModel:
                 
         
         entity.change_used_capacity(-1 * len(accepted_persons))
+        logger.info(f"in service_done: entity_id: {entity_id} - accepteds: {accepted_persons} - rejecteds: {rejected_persons}")
 
         return {"accepted": accepted_persons, "rejected": rejected_persons}
     #=============================================================================

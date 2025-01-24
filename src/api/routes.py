@@ -1,7 +1,8 @@
 from src.models.world_model import WorldModel
 from src.api.schemas import RegisterBody, AcceptPersonBody, ServiceDoneBody, UpdateSelfBody, PersonDeathBody, PersonInjuryBody
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter
+from fastapi.responses import JSONResponse
 
 world_model = WorldModel(100)
 world_model.populate_worldModel(12)
@@ -19,9 +20,12 @@ async def register(body: RegisterBody):
     return response
 
 
-@router.get('/api/snapshot')
+@router.get('/api/snapshot/{entity_id}')
 def snapshot(entity_id: int):
     response = world_model.snapshot(entity_id=entity_id)
+    if not response:
+        return JSONResponse({"message": "entity does not exist in the worldmodel"},404)
+    
     return response
 
 

@@ -29,7 +29,7 @@ class Entity(BaseEntity):
 
 
 class EntityAttributeValue(BaseEntity):
-    def __init__(self, entity_id: int, name: str, value):
+    def __init__(self, entity_id: int, name: str, value: int | str | list | dict):
         super().__init__()
         self.entity_id = entity_id
         self.name = name.lower()

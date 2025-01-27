@@ -192,21 +192,40 @@ class WorldModel:
 
         return True
 
-    # should check if only hospital or police call can happen
-    def person_death(self, entity_id: int, persons_id: list) -> bool:
-        if not self.entity_exists(entity_id) or not self.validate_persons_for_entity(
-            entity_id, persons_id
-        ):
+
+    def validate_person_for_person_death(self, entity: Entity, person_id: int) -> bool:
+        person = self.persons.get(person_id)
+        
+        if not person:
             return False
-
-        for person_id in persons_id:
-            self.persons[person_id].die()
-
-        entity = self.entities.get(entity_id)
-        if entity is not None:
-            entity.change_used_capacity(-1 * len(persons_id))
-
+        
+        if person.current_entity != entity.entity_type:
+            return False
+        
         return True
+
+    # should check if only hospital or police call can happen
+    def person_death(self, entity_id: int, persons_id: list) -> dict[str, list[int]]:
+        entity = self.entity_exists(entity_id)
+        if not entity:
+            logger.error(f"in person_death: entity not found - entity_id: {entity_id}")
+            return {"accepted": [], "rejected": persons_id}
+
+        accepted_persons = []
+        rejected_persons = []
+        for person_id in persons_id:
+            if self.validate_person_for_person_death(entity, person_id):
+                person = self.persons[person_id]
+                accepted_persons.append(person_id)
+                person.die()
+            else:
+                rejected_persons.append(person_id)
+
+
+        entity.change_used_capacity(-1 * len(accepted_persons))
+        logger.info(f"in person_death: entity_id: {entity_id} - accepteds: {accepted_persons} - rejecteds: {rejected_persons}")
+
+        return {"accepted": accepted_persons, "rejected": rejected_persons}
 
     def start_earthquake(self) -> None:
         self.earthquake_status = True
@@ -214,11 +233,11 @@ class WorldModel:
     def stop_earthquake(self) -> None:
         self.earthquake_status = False
 
-    def entity_exists(self, entity_id):
+    def entity_exists(self, entity_id) -> Entity | None:
         entity = self.entities.get(entity_id)
 
         if not entity:
-            return False
+            return None
 
         return entity
 

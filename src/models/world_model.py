@@ -41,7 +41,7 @@ class WorldModel:
         for person in self.persons.values():
             if person.current_entity == "city":
                 if random.random() < self.injury_probability:
-                    self.person_injury(person.current_entity, [person.id])
+                    self.__person_injury_from_world_model([person.id])
                 elif random.random() < self.store_probability:
                     self.fill_store_line(1)
 
@@ -200,24 +200,55 @@ class WorldModel:
 
         return True
 
-    # should check if only store or world model call can happen
-    def person_injury(self, entity_id: int, persons_ids: list) -> bool:
-        if not self.entity_exists(entity_id) or not self.validate_persons_for_entity(
-            entity_id, persons_ids
-        ):
+    def validate_persons_for_injury(self, entity: Entity, person_id: int) -> bool:
+        person = self.persons.get(person_id)
+
+        if not person:
             return False
 
-        for person_id in persons_ids:
-            person = self.persons[person_id]
-            person.injure()
-            person.changeEntity("ecu")
-            person.changeEntityStatus(EntityStatus.INLINE)
-
-        entity = self.entities.get(entity_id)
-        if entity is not None:
-            entity.change_used_capacity(-1 * len(persons_ids))
+        if person.current_entity != entity.entity_type or entity.entity_type != "store" or person.status != PersonStatus.INJURED:
+            return False
 
         return True
+
+    def __person_injury_from_world_model(self, persons_ids: list) -> bool:
+        accepted_persons = []
+        rejected_persons = []
+        for person_id in persons_ids:
+            person = self.persons[person_id]
+            if person.status == PersonStatus.INJURED:
+                accepted_persons.append(person_id)
+                person.injure()
+                person.changeEntity("ecu")
+                person.changeEntityStatus(EntityStatus.INLINE)
+            else:
+                rejected_persons.append(person_id)
+
+        logger.info(f"in person_injury_from_world_model: - accepteds: {accepted_persons} - rejecteds: {rejected_persons}")
+        return {"accepted": accepted_persons, "rejected": rejected_persons}
+
+    # should check if only store or world model call can happen
+    # handle above statement in validate_persons_for_injury and another method for world model call person injury
+    def person_injury(self, entity_id: int, persons_ids: list) -> dict[str, list[int]]:
+        entity = self.entity_exists(entity_id)
+        if not entity:
+            logger.error(f"in person_injury: entity not found - entity_id: {entity_id}")
+            return {"accepted": [], "rejected": persons_ids}
+
+        accepted_persons = []
+        rejected_persons = []
+        for person_id in persons_ids:
+            if self.validate_persons_for_injury(entity, person_id):
+                person = self.persons[person_id]
+                accepted_persons.append(person_id)
+                person.injure()
+                person.changeEntity("ecu")
+                person.changeEntityStatus(EntityStatus.INLINE)
+            else:
+                rejected_persons.append(person_id)
+
+        logger.info(f"in person_injury: entity_id: {entity_id} - accepteds: {accepted_persons} - rejecteds: {rejected_persons}")
+        return {"accepted": accepted_persons, "rejected": rejected_persons}
 
     def validate_person_for_person_death(self, entity: Entity, person_id: int) -> bool:
         person = self.persons.get(person_id)

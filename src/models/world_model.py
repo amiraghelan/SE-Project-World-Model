@@ -1,5 +1,9 @@
-from datetime import datetime
+import asyncio
 import random
+
+from typing import Union
+from configparser import ConfigParser
+from datetime import datetime, timedelta
 
 from src.models.person import Person
 from src.models.snapshot import Snapshot
@@ -8,6 +12,10 @@ from src.models.enums import EntityStatus, PersonStatus
 from src.utils.logger import get_logger
 
 logger = get_logger(__name__)
+config = ConfigParser()
+config.read('config.ini')
+
+
 class WorldModel:
     def __init__(self, time_rate: int = 1) -> None:
         self.time_rate = time_rate
@@ -16,9 +24,29 @@ class WorldModel:
         self.eavs: dict[int, list[EntityAttributeValue]] = dict()
         self.persons: dict[int, Person] = dict()
         self.start_date = datetime.now()
-    
-    
-    #==register====================================================================
+
+        # read config
+        self.injury_probability = config.getfloat('world-model', 'injury_probability', fallback=0.1)
+        self.store_probability = config.getfloat('world-model', 'store_probability', fallback=0.2)
+        self.action_interval = timedelta(seconds=config.getint('world-model', 'action_interval', fallback=10))
+
+        asyncio.create_task(self.random_actions())
+
+    async def random_actions(self):
+        while True:
+            await asyncio.sleep(self.action_interval.total_seconds())
+            self.perform_random_actions()
+
+    def perform_random_actions(self):
+        for person in self.persons.values():
+            if person.current_entity == "city":
+                if random.random() < self.injury_probability:
+                    self.person_injury(person.current_entity, [person.id])
+                elif random.random() < self.store_probability:
+                    self.fill_store_line(1)
+
+    # ==register====================================================================
+
     def register(
         self,
         entity_type: str,
@@ -33,12 +61,12 @@ class WorldModel:
             EntityAttributeValue(entity.id, name, value) for name, value in eav.items()
         ]
 
-        logger.info(f"new entity regitered - entity_type: {entity_type} - max-cap: {max_capacity} - id: {entity_id}")
+        logger.info(f"new entity registered - entity_type: {entity_type} - max-cap: {max_capacity} - id: {entity_id}")
 
         return {"entity_id": entity_id, "time_rate": self.time_rate}
 
+    # ==snapshot====================================================================
 
-    #==snapshot====================================================================
     def match_snapshot_persons(self, entity: Entity) -> list:
         entity_type = entity.entity_type
         match entity_type:
@@ -65,38 +93,38 @@ class WorldModel:
                 ]
             case _:
                 return []
-    
-    def snapshot(self, entity_id: int) -> Snapshot | bool:
+
+    def snapshot(self, entity_id: int) -> Union[Snapshot, bool]:
         entity = self.entity_exists(entity_id)
 
         if not entity:
             return False
-        
+
         return Snapshot(
             entity_id, self.match_snapshot_persons(entity), self.earthquake_status
         )
 
-    #==accpet persons=============================================================
-    def validate_person_to_accept(self, entity: Entity, person_id: int)->bool:
+    # ==accpet persons=============================================================
+    def validate_person_to_accept(self, entity: Entity, person_id: int) -> bool:
         person = self.persons.get(person_id)
-        
+
         if not person:
             return False
-        
+
         if person.current_entity != entity.entity_type or person.entity_status != EntityStatus.INLINE:
             return False
-        
+
         return True
-    
-    def accept_person(self, entity_id: int, persons_id: list) -> dict[str, list[int]]:
+
+    def accept_person(self, entity_id: int, persons_ids: list) -> dict[str, list[int]]:
         entity = self.entity_exists(entity_id=entity_id)
         if not entity:
             logger.error(f"in accept-person: entity not found - entity_id: {entity_id}")
-            return {"accepted": [], "rejected": persons_id}
+            return {"accepted": [], "rejected": persons_ids}
 
         accepted_persons = []
         rejected_persons = []
-        for person_id in persons_id:
+        for person_id in persons_ids:
             if self.validate_person_to_accept(entity, person_id):
                 person = self.persons.get(person_id)
                 if person:
@@ -105,33 +133,33 @@ class WorldModel:
                     accepted_persons.append(person_id)
             else:
                 rejected_persons.append(person_id)
-                
+
         entity.change_used_capacity(len(accepted_persons))
         logger.info(f"in accept-person: entity_id: {entity_id} - accepteds: {accepted_persons} - rejecteds: {rejected_persons}")
         return {"accepted": accepted_persons, "rejected": rejected_persons}
-    #=============================================================================
-    
-    #==service done===============================================================
-    def validate_person_for_service_done(self, entity: Entity, person_id: int)->bool:
+    # =============================================================================
+
+    # ==service done===============================================================
+    def validate_person_for_service_done(self, entity: Entity, person_id: int) -> bool:
         person = self.persons.get(person_id)
-        
+
         if not person:
             return False
-        
+
         if person.current_entity != entity.entity_type or person.entity_status != EntityStatus.SERVICE:
             return False
-        
+
         return True
-    
-    def service_done(self, entity_id: int, persons_id: list) -> dict[str, list[int]]:
+
+    def service_done(self, entity_id: int, persons_ids: list) -> dict[str, list[int]]:
         entity = self.entity_exists(entity_id)
         if not entity:
             logger.error(f"in service_done: entity not found - entity_id: {entity_id}")
-            return {"accepted": [], "rejected": persons_id}
+            return {"accepted": [], "rejected": persons_ids}
 
         accepted_persons = []
         rejected_persons = []
-        for person_id in persons_id:
+        for person_id in persons_ids:
             if self.validate_person_for_service_done(entity, person_id):
                 person = self.persons[person_id]
                 accepted_persons.append(person_id)
@@ -147,13 +175,12 @@ class WorldModel:
                         person.changeEntity("city")
             else:
                 rejected_persons.append(person_id)
-                
-        
+
         entity.change_used_capacity(-1 * len(accepted_persons))
         logger.info(f"in service_done: entity_id: {entity_id} - accepteds: {accepted_persons} - rejecteds: {rejected_persons}")
 
         return {"accepted": accepted_persons, "rejected": rejected_persons}
-    #=============================================================================
+    # =============================================================================
 
     def update_self(
         self, entity_id: int, max_capacity: int, eav: dict[str, str | int | dict | list]
@@ -174,13 +201,13 @@ class WorldModel:
         return True
 
     # should check if only store or world model call can happen
-    def person_injury(self, entity_id: int, persons_id: list) -> bool:
+    def person_injury(self, entity_id: int, persons_ids: list) -> bool:
         if not self.entity_exists(entity_id) or not self.validate_persons_for_entity(
-            entity_id, persons_id
+            entity_id, persons_ids
         ):
             return False
 
-        for person_id in persons_id:
+        for person_id in persons_ids:
             person = self.persons[person_id]
             person.injure()
             person.changeEntity("ecu")
@@ -188,39 +215,37 @@ class WorldModel:
 
         entity = self.entities.get(entity_id)
         if entity is not None:
-            entity.change_used_capacity(-1 * len(persons_id))
+            entity.change_used_capacity(-1 * len(persons_ids))
 
         return True
-
 
     def validate_person_for_person_death(self, entity: Entity, person_id: int) -> bool:
         person = self.persons.get(person_id)
-        
+
         if not person:
             return False
-        
+
         if person.current_entity != entity.entity_type:
             return False
-        
+
         return True
 
     # should check if only hospital or police call can happen
-    def person_death(self, entity_id: int, persons_id: list) -> dict[str, list[int]]:
+    def person_death(self, entity_id: int, persons_ids: list) -> dict[str, list[int]]:
         entity = self.entity_exists(entity_id)
         if not entity:
             logger.error(f"in person_death: entity not found - entity_id: {entity_id}")
-            return {"accepted": [], "rejected": persons_id}
+            return {"accepted": [], "rejected": persons_ids}
 
         accepted_persons = []
         rejected_persons = []
-        for person_id in persons_id:
+        for person_id in persons_ids:
             if self.validate_person_for_person_death(entity, person_id):
                 person = self.persons[person_id]
                 accepted_persons.append(person_id)
                 person.die()
             else:
                 rejected_persons.append(person_id)
-
 
         entity.change_used_capacity(-1 * len(accepted_persons))
         logger.info(f"in person_death: entity_id: {entity_id} - accepteds: {accepted_persons} - rejecteds: {rejected_persons}")
@@ -233,7 +258,7 @@ class WorldModel:
     def stop_earthquake(self) -> None:
         self.earthquake_status = False
 
-    def entity_exists(self, entity_id) -> Entity | None:
+    def entity_exists(self, entity_id: int) -> Entity | None:
         entity = self.entities.get(entity_id)
 
         if not entity:
@@ -241,9 +266,7 @@ class WorldModel:
 
         return entity
 
-    
-
-    def populate_worldModel(self, persons_count: int = 1):
+    def populate_world_model(self, persons_count: int = 1):
         for _ in range(persons_count):
             person = Person.generateRandomPerson()
             self.persons[person.id] = person

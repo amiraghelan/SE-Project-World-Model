@@ -1,5 +1,7 @@
 from datetime import datetime
 from src.models.base_model import BaseEntity
+import math
+from pydantic import BaseModel
 
 
 class Entity(BaseEntity):
@@ -26,6 +28,29 @@ class Entity(BaseEntity):
             f"Creation Date: {self.creation_date.strftime('%Y-%m-%d %H:%M:%S')}\n"
             f"Modified Date: {self.modified_date.strftime('%Y-%m-%d %H:%M:%S')}"
         )
+
+    x: float
+    y: float
+    health: float = 100.0  # Default health value for an entity
+
+    def take_damage(self, damage_amount: float):
+        """
+        Applies damage to the entity, reducing its health by 'damage_amount'.
+        
+        If health goes below 0, it is set to 0 to indicate the entity is effectively 'destroyed' or 'dead'.
+        """
+        self.health -= damage_amount
+        if self.health < 0:
+            self.health = 0
+
+    def calculate_distance(self, epicenter: tuple) -> float:
+        """
+        Calculates the distance between the entity's position (x, y) and the provided epicenter (ex, ey).
+        
+        This method could be useful if we want each entity to handle its own distance calculation.
+        """
+        ex, ey = epicenter
+        return math.dist((self.x, self.y), (ex, ey))
 
 
 class EntityAttributeValue(BaseEntity):

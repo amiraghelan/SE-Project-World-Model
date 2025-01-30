@@ -7,6 +7,9 @@ from src.models.entity import Entity, EntityAttributeValue
 from src.models.enums import EntityStatus, PersonStatus
 from src.utils.logger import get_logger
 
+from typing import Tuple, Any
+import math
+
 logger = get_logger(__name__)
 class WorldModel:
     def __init__(self, time_rate: int = 1) -> None:
@@ -17,7 +20,11 @@ class WorldModel:
         self.persons: dict[int, Person] = dict()
         self.start_date = datetime.now()
     
-    
+        """
+        WorldModel constructor initializing entities or other state variables.
+        """
+        # For example, a list of entities in the world.
+        self.entities = []    
     #==register====================================================================
     def register(
         self,
@@ -288,3 +295,76 @@ class WorldModel:
 
     def log(self):
         pass
+
+
+    def simulate_earthquake(self, intensity: float, epicenter: Tuple[float, float], duration: float) -> Any:
+        """
+        Simulates an earthquake in the world model.
+        
+        intensity (float): Magnitude/intensity of the quake
+        epicenter (Tuple[float, float]): Coordinates (x, y) of the quake's epicenter
+        duration (float): Duration of the quake in seconds
+
+        This method calculates the impact on each entity and updates their state accordingly.
+        Returns a dictionary with relevant simulation details.
+        """
+
+        affected_entities = []  # Will keep track of all entities that are impacted
+
+        for entity in self.entities:
+            # Calculate the distance between entity and epicenter
+            distance = self._calculate_distance(entity.x, entity.y, epicenter)
+            
+            # Calculate damage based on quake intensity and distance
+            damage_value = self._calculate_damage(intensity, distance)
+            
+            # Apply damage to the entity (assuming entity has a take_damage method)
+            entity.take_damage(damage_value)
+            
+            # Check if the entity was actually affected (damage_value > 0)
+            if damage_value > 0:
+                affected_entities.append(entity)
+
+        # Return a summary of the simulation
+        return {
+            "intensity": intensity,
+            "epicenter": epicenter,
+            "duration": duration,
+            "affected_count": len(affected_entities)
+        }
+
+    def _calculate_distance(self, x: float, y: float, epicenter: Tuple[float, float]) -> float:
+        """
+        Helper method to calculate the distance between entity coordinates (x, y) and the earthquake's epicenter.
+        
+        Returns the distance as a floating-point number.
+        """
+        ex, ey = epicenter
+        return math.dist((x, y), (ex, ey))
+
+    def _calculate_damage(self, intensity: float, distance: float) -> float:
+        """
+        Computes damage based on the quake's intensity and the distance from its epicenter.
+        
+        You can adjust this function to fit your desired simulation logic.
+        """
+        # Example: Base damage is intensity * 10
+        # Distance reduces the damage in an inverse manner
+        base_damage = intensity * 10
+
+        if distance == 0:
+            # If an entity is exactly at the epicenter
+            return base_damage
+        
+        # Otherwise, divide the damage by some function of distance
+        return base_damage / (distance + 1)
+
+
+
+
+
+
+
+
+
+

@@ -3,6 +3,7 @@ from src.models.world_model import WorldModel
 from src.api.schemas import (
     RegisterBody,
     AcceptPersonBody,
+    RegisterResponse,
     ServiceDoneBody,
     UpdateSelfBody,
     PersonDeathBody,
@@ -27,8 +28,8 @@ def get_world_model(request: Request) -> WorldModel:
 # create entity and entity attribute value here is not good practice
 
 
-@router.post("/api/register")
-async def register(
+@router.post("/api/register", response_model=RegisterResponse)
+def register(
     world_model: Annotated[WorldModel, Depends(get_world_model)], body: RegisterBody
 ):
     logger.info(f"new register request - entity_type: {body.entity_type}")

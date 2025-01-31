@@ -6,7 +6,7 @@ import threading
 from src.models.person import Person
 from src.models.snapshot import Snapshot
 from src.models.entity import Entity, EntityAttributeValue
-from src.models.enums import EntityStatus, EntityEnum
+from src.models.enums import EntityStatus, EntityEnum, PersonStatus
 from src.utils.logger import get_logger
 import src.config as config
 
@@ -48,7 +48,7 @@ class WorldModel:
         ]
 
         logger.info(
-            f"new entity regitered - entity_type: {entity_type} - max-cap: {max_capacity} - id: {entity_id}"
+            f"register - new entity regitered - entity_type: {entity_type} - max-cap: {max_capacity} - id: {entity_id}"
         )
 
         return {
@@ -59,13 +59,14 @@ class WorldModel:
         }
 
     # ==snapshot====================================================================
-    def match_snapshot_persons(self, entity: Entity) -> list:
+    def match_snapshot_persons(self, entity: Entity) -> list[Person]:
         entity_type = entity.entity_type
         res = [
             person
             for person in self.persons.values()
             if person.current_entity == entity_type
             and person.entity_status == EntityStatus.INLINE
+            and person.status != PersonStatus.DEAD
         ]
         return res
 
@@ -83,7 +84,7 @@ class WorldModel:
     def validate_person_to_accept(self, entity: Entity, person_id: int) -> bool:
         person = self.persons.get(person_id)
 
-        if not person:
+        if not person  or person.status == PersonStatus.DEAD:
             return False
 
         if (
@@ -97,7 +98,7 @@ class WorldModel:
     def accept_person(self, entity_id: int, persons_id: list) -> dict[str, list[int]]:
         entity = self.entity_exists(entity_id=entity_id)
         if not entity:
-            logger.error(f"in accept-person: entity not found - entity_id: {entity_id}")
+            logger.error(f"accept-person - entity not found - entity_id: {entity_id}")
             return {"accepted": [], "rejected": persons_id}
 
         accepted_persons = []
@@ -114,7 +115,7 @@ class WorldModel:
 
         entity.change_used_capacity(len(accepted_persons))
         logger.info(
-            f"in accept-person: entity_id: {entity_id} - accepteds: {accepted_persons} - rejecteds: {rejected_persons}"
+            f"accept-person - entity_id: {entity_id} - accepteds: {accepted_persons} - rejecteds: {rejected_persons}"
         )
         return {"accepted": accepted_persons, "rejected": rejected_persons}
 
@@ -124,7 +125,7 @@ class WorldModel:
     def validate_person_for_service_done(self, entity: Entity, person_id: int) -> bool:
         person = self.persons.get(person_id)
 
-        if not person:
+        if not person  or person.status == PersonStatus.DEAD:
             return False
 
         if (
@@ -138,7 +139,7 @@ class WorldModel:
     def service_done(self, entity_id: int, persons_id: list) -> dict[str, list[int]]:
         entity = self.entity_exists(entity_id)
         if not entity:
-            logger.error(f"in service_done: entity not found - entity_id: {entity_id}")
+            logger.error(f"service_done: entity not found - entity_id: {entity_id}")
             return {"accepted": [], "rejected": persons_id}
 
         accepted_persons = []
@@ -150,19 +151,19 @@ class WorldModel:
                 match entity.entity_type:
                     case "ecu":
                         person.changeEntityStatus(EntityStatus.INLINE)
-                        person.changeEntity("hospital")
+                        person.changeEntity(EntityEnum.HOSPITAL)
                     case "hospital":
                         person.changeEntityStatus(EntityStatus.IDLE)
-                        person.changeEntity("city")
+                        person.changeEntity(EntityEnum.CITY)
                     case "store":
                         person.changeEntityStatus(EntityStatus.IDLE)
-                        person.changeEntity("city")
+                        person.changeEntity(EntityEnum.CITY)
             else:
                 rejected_persons.append(person_id)
 
         entity.change_used_capacity(-1 * len(accepted_persons))
         logger.info(
-            f"in service_done: entity_id: {entity_id} - accepteds: {accepted_persons} - rejecteds: {rejected_persons}"
+            f"service_done: entity_id: {entity_id} - accepteds: {accepted_persons} - rejecteds: {rejected_persons}"
         )
 
         return {"accepted": accepted_persons, "rejected": rejected_persons}
@@ -187,29 +188,36 @@ class WorldModel:
 
         return True
 
-    # should check if only store or world model call can happen
-    def person_injury(self, entity_id: int, persons_id: list) -> bool:
-        if not self.entity_exists(entity_id) or not self.validate_persons_for_entity(
-            entity_id, persons_id
-        ):
-            return False
-
+    # ==person injury==============================================================
+    def person_injury(self, entity_id: int, persons_id: list) -> dict[str, list[int]]:
+        entity = self.entity_exists(entity_id)
+        if not entity:
+            logger.error(f"person_injury: entity not found - entity_id: {entity_id}")
+            return {"accepted": [], "rejected": persons_id}
+        
+        accepted_persons = []
+        rejected_persons = []
         for person_id in persons_id:
-            person = self.persons[person_id]
-            person.injure()
-            person.changeEntity(EntityEnum.ECU)
-            person.changeEntityStatus(EntityStatus.INLINE)
-
-        entity = self.entities.get(entity_id)
-        if entity is not None:
-            entity.change_used_capacity(-1 * len(persons_id))
-
-        return True
-
+            if self.validate_person_for_service_done(entity, person_id):
+                person = self.persons[person_id]
+                accepted_persons.append(person_id)
+                person.changeEntityStatus(EntityStatus.INLINE)
+                person.changeEntity(EntityEnum.ECU)
+            else:
+                rejected_persons.append(person_id)
+        
+        entity.change_used_capacity(-1 * len(accepted_persons))
+        logger.info(
+            f"person_injury: entity_id: {entity_id} - accepteds: {accepted_persons} - rejecteds: {rejected_persons}"
+        )
+        return {"accepted": accepted_persons, "rejected": rejected_persons}
+    #==============================================================================
+    
+    #== person death===============================================================
     def validate_person_for_person_death(self, entity: Entity, person_id: int) -> bool:
         person = self.persons.get(person_id)
 
-        if not person:
+        if not person or person.status == PersonStatus.DEAD:
             return False
 
         if person.current_entity != entity.entity_type:
@@ -217,11 +225,10 @@ class WorldModel:
 
         return True
 
-    # should check if only hospital or police call can happen
     def person_death(self, entity_id: int, persons_id: list) -> dict[str, list[int]]:
         entity = self.entity_exists(entity_id)
         if not entity:
-            logger.error(f"in person_death: entity not found - entity_id: {entity_id}")
+            logger.error(f"person_death: entity not found - entity_id: {entity_id}")
             return {"accepted": [], "rejected": persons_id}
 
         accepted_persons = []
@@ -236,7 +243,7 @@ class WorldModel:
 
         entity.change_used_capacity(-1 * len(accepted_persons))
         logger.info(
-            f"in person_death: entity_id: {entity_id} - accepteds: {accepted_persons} - rejecteds: {rejected_persons}"
+            f"person_death: entity_id: {entity_id} - accepteds: {accepted_persons} - rejecteds: {rejected_persons}"
         )
 
         return {"accepted": accepted_persons, "rejected": rejected_persons}
@@ -290,7 +297,7 @@ class WorldModel:
     def clock(self):
         now = datetime.now()
         delta = now - self.start_date
-        return (delta.total_seconds() * self.time_rate) // 1
+        return int(delta.total_seconds() * self.time_rate)
 
     def automate(self):
         while True:

@@ -8,7 +8,7 @@ class PersonStatus(Enum):
 
 class EntityEnum(Enum):
     STORE = 'store'
-    HOSPITAL = 'hostpital'
+    HOSPITAL = 'hospital'
     ECU = 'ecu'
     CITY = 'city'
     

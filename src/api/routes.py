@@ -32,7 +32,7 @@ def get_world_model(request: Request) -> WorldModel:
 def register(
     world_model: Annotated[WorldModel, Depends(get_world_model)], body: RegisterBody
 ):
-    logger.info(f"new register request - entity_type: {body.entity_type}")
+    logger.info(f"api - register - entity_type: {body.entity_type}")
     response = world_model.register(body.entity_type, body.max_capacity, body.eav)
 
     return response
@@ -42,10 +42,10 @@ def register(
 def snapshot(
     world_model: Annotated[WorldModel, Depends(get_world_model)], entity_id: int
 ):  
-    logger.info(f"new snapshot request - entity_id: {entity_id}")
+    logger.info(f"api - snapshot - entity_id: {entity_id}")
     response = world_model.snapshot(entity_id=entity_id)
     if not response:
-        logger.error(f"in snapshot api: entity_id was not found - id:{entity_id}")
+        logger.error(f"api - snapshot: entity_id was not found - id:{entity_id}")
         return JSONResponse({"message": "entity does not exist in the worldmodel"}, 404)
 
     return response
@@ -55,7 +55,8 @@ def snapshot(
 def accept_person(
     world_model: Annotated[WorldModel, Depends(get_world_model)], body: AcceptPersonBody
 ):
-    logger.info(f"new accpet-person request - entity_id: {body.entity_id} - persons_id: {body.persons_id}")
+    logger.info(f"api - accept_person - entity_id: {body.entity_id}  - persons_id: {body.persons_id}")
+    
     response = world_model.accept_person(body.entity_id, body.persons_id)
     return response
 
@@ -64,6 +65,8 @@ def accept_person(
 def service_done(
     world_model: Annotated[WorldModel, Depends(get_world_model)], body: ServiceDoneBody
 ):
+    logger.info(f"api - service_done - entity_id: {body.entity_id}  - persons_id: {body.persons_id}")
+    
     response = world_model.service_done(body.entity_id, body.persons_id)
     return response
 
@@ -72,6 +75,8 @@ def service_done(
 def update_self(
     world_model: Annotated[WorldModel, Depends(get_world_model)], body: UpdateSelfBody
 ):
+    logger.info(f"api - update_self - entity_id: {body.entity_id}")
+    
     response = world_model.update_self(body.entity_id, body.max_capacity, body.eav)
     return response
 
@@ -80,6 +85,8 @@ def update_self(
 def person_injury(
     world_model: Annotated[WorldModel, Depends(get_world_model)], body: PersonInjuryBody
 ):
+    logger.info(f"api - person_injury - entity_id: {body.entity_id}  - persons_id: {body.persons_id}")
+    
     response = world_model.person_injury(body.entity_id, body.persons_id)
     return response
 
@@ -88,5 +95,7 @@ def person_injury(
 def person_death(
     world_model: Annotated[WorldModel, Depends(get_world_model)], body: PersonDeathBody
 ):
+    logger.info(f"api - person_death - entity_id: {body.entity_id}  - persons_id: {body.persons_id}")
+    
     response = world_model.person_death(body.entity_id, body.persons_id)
     return response

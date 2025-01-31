@@ -3,7 +3,9 @@ import random
 import names
 from src.models.base_model import BaseEntity
 from src.models.enums import Gender, EntityStatus, PersonStatus, EntityEnum
+from src.utils.logger import get_logger
 
+logger = get_logger(__name__)
 
 class Person(BaseEntity):
     def __init__(
@@ -26,27 +28,33 @@ class Person(BaseEntity):
         self.current_entity = current_entity
         self.entity_status = entity_status
         self.death_date = death_date
+        logger.info(f"new person created: id={self.id} creation_date={self.creation_date} name={self.name}")     
 
     def heal(self) -> None:
         self.status = PersonStatus.ALIVE
         self.modified_date = datetime.now()
+        logger.info(f"person status changed to alive: id={self.id} name={self.name}")
 
     def injure(self) -> None:
         self.status = PersonStatus.INJURED
         self.modified_date = datetime.now()
+        logger.info(f"person status changed to injured: id={self.id} name={self.name}")        
 
     def die(self) -> None:
         self.status = PersonStatus.DEAD
         self.death_date = datetime.now()
         self.modified_date = datetime.now()
+        logger.info(f"person status changed to dead: id={self.id} name={self.name}")    
 
     def changeEntity(self, destination: EntityEnum) -> None:
         self.current_entity = destination
         self.modified_date = datetime.now()
+        logger.info(f"person entity changed to {destination.value}: id={self.id} name={self.name}")     
 
     def changeEntityStatus(self, status: EntityStatus) -> None:
         self.entity_status = status
         self.modified_date = datetime.now()
+        logger.info(f"person entity_status changed to {status.value}: id={self.id} name={self.name}")    
 
     @staticmethod
     def generateRandomPerson():

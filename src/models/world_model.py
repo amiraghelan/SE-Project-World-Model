@@ -1,15 +1,23 @@
 from datetime import datetime
 import random
+from time import sleep
+import threading
 
 from src.models.person import Person
 from src.models.snapshot import Snapshot
 from src.models.entity import Entity, EntityAttributeValue
 from src.models.enums import EntityStatus, EntityEnum
 from src.utils.logger import get_logger
+import src.config as config
 
 logger = get_logger(__name__)
 
+
 class WorldModel:
+    _last_eq_clock = 0
+    _last_refill_clock = 0
+    _last_populate_clock = 0
+
     def __init__(self, time_rate: int = 1) -> None:
         self.time_rate = time_rate
         self.earthquake_status = False
@@ -17,7 +25,12 @@ class WorldModel:
         self.eavs: dict[int, list[EntityAttributeValue]] = dict()
         self.persons: dict[int, Person] = dict()
         self.start_date = datetime.now()
-        logger.info(f"world_model created at {self.start_date} with time_rate = {self.time_rate}")
+        self.automate_thread = threading.Thread(target=self.automate)
+        self.automate_thread.daemon = True
+        self.automate_thread.start()
+        logger.info(
+            f"world_model created at {self.start_date} with time_rate = {self.time_rate}"
+        )
 
     # ==register====================================================================
     def register(
@@ -26,7 +39,7 @@ class WorldModel:
         max_capacity: int,
         eav: dict[str, str | int | dict | list],
     ) -> dict:
-        entity = Entity(EntityEnum(entity_type), max_capacity)
+        entity = Entity(EntityEnum(entity_type.lower()), max_capacity)
         entity_id = entity.id
 
         self.entities[entity_id] = entity
@@ -49,11 +62,11 @@ class WorldModel:
     def match_snapshot_persons(self, entity: Entity) -> list:
         entity_type = entity.entity_type
         res = [
-                    person
-                    for person in self.persons.values()
-                    if person.current_entity == entity_type
-                    and person.entity_status == EntityStatus.INLINE
-                ]
+            person
+            for person in self.persons.values()
+            if person.current_entity == entity_type
+            and person.entity_status == EntityStatus.INLINE
+        ]
         return res
 
     def snapshot(self, entity_id: int) -> Snapshot | bool:
@@ -153,6 +166,7 @@ class WorldModel:
         )
 
         return {"accepted": accepted_persons, "rejected": rejected_persons}
+
     # =============================================================================
 
     def update_self(
@@ -229,9 +243,12 @@ class WorldModel:
 
     def start_earthquake(self) -> None:
         self.earthquake_status = True
+        logger.info(f"earthquake started at clock={ self.clock()} ")
 
     def stop_earthquake(self) -> None:
         self.earthquake_status = False
+        logger.info(f"earthquake stopped at clock={ self.clock()} ")
+        
 
     def entity_exists(self, entity_id) -> Entity | None:
         entity = self.entities.get(entity_id)
@@ -245,7 +262,9 @@ class WorldModel:
         for _ in range(persons_count):
             person = Person.generateRandomPerson()
             self.persons[person.id] = person
-        logger.info(f"world_model populated with {persons_count} persons")
+        logger.info(
+            f"world_model populated with {persons_count} persons at clock = {self.clock()}"
+        )
 
     def fill_entity_line(self, entity: EntityEnum, count: int = 1):
         logger.info(f"trying to fill {entity.value} line with {count} persons")
@@ -263,10 +282,37 @@ class WorldModel:
             person = random.choice(idle_persons)
             person.changeEntity(entity)
             person.changeEntityStatus(EntityStatus.INLINE)
-            c+=1
-        logger.info(f"{entity.value} line filled with {c} persons")
+            c += 1
+        logger.info(
+            f"{entity.value} line filled with {c} persons at clock={self.clock()}"
+        )
 
     def clock(self):
         now = datetime.now()
         delta = now - self.start_date
         return (delta.total_seconds() * self.time_rate) // 1
+
+    def automate(self):
+        while True:
+            clock = self.clock()
+
+            if clock - WorldModel._last_eq_clock >= config.EQ_INTERVAL:
+                self.start_earthquake()
+                WorldModel._last_eq_clock = clock
+
+            if self.earthquake_status and (
+                clock - WorldModel._last_eq_clock >= config.EQ_DURATION
+            ):
+                self.stop_earthquake()
+
+            if clock - WorldModel._last_refill_clock >= config.REFILL_INTERVAL:
+                self.fill_entity_line(EntityEnum.STORE, config.STORE_REFILL_COUNT)
+                self.fill_entity_line(EntityEnum.HOSPITAL, config.HOSPITAL_REFILL_COUNT)
+                self.fill_entity_line(EntityEnum.ECU, config.ECU_REFILL_COUNT)
+                WorldModel._last_refill_clock = clock
+                
+            if clock - WorldModel._last_populate_clock >= config.REP_INTERVAL:
+                self.populate_worldModel(config.REP_COUNT)
+                WorldModel._last_populate_clock = clock
+            
+            sleep(1 / self.time_rate)

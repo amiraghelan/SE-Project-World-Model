@@ -4,10 +4,11 @@ import random
 from src.models.person import Person
 from src.models.snapshot import Snapshot
 from src.models.entity import Entity, EntityAttributeValue
-from src.models.enums import EntityStatus, PersonStatus
+from src.models.enums import EntityStatus, EntityEnum
 from src.utils.logger import get_logger
 
 logger = get_logger(__name__)
+
 class WorldModel:
     def __init__(self, time_rate: int = 1) -> None:
         self.time_rate = time_rate
@@ -16,16 +17,15 @@ class WorldModel:
         self.eavs: dict[int, list[EntityAttributeValue]] = dict()
         self.persons: dict[int, Person] = dict()
         self.start_date = datetime.now()
-    
-    
-    #==register====================================================================
+
+    # ==register====================================================================
     def register(
         self,
         entity_type: str,
         max_capacity: int,
         eav: dict[str, str | int | dict | list],
     ) -> dict:
-        entity = Entity(entity_type, max_capacity)
+        entity = Entity(EntityEnum(entity_type), max_capacity)
         entity_id = entity.id
 
         self.entities[entity_id] = entity
@@ -33,61 +33,53 @@ class WorldModel:
             EntityAttributeValue(entity.id, name, value) for name, value in eav.items()
         ]
 
-        logger.info(f"new entity regitered - entity_type: {entity_type} - max-cap: {max_capacity} - id: {entity_id}")
+        logger.info(
+            f"new entity regitered - entity_type: {entity_type} - max-cap: {max_capacity} - id: {entity_id}"
+        )
 
-        return {"entity_id": entity_id, "time_rate": self.time_rate}
+        return {
+            "entity_id": entity_id,
+            "time_rate": self.time_rate,
+            "start_date": self.start_date,
+            "current_clock": self.clock(),
+        }
 
-
-    #==snapshot====================================================================
+    # ==snapshot====================================================================
     def match_snapshot_persons(self, entity: Entity) -> list:
         entity_type = entity.entity_type
-        match entity_type:
-            case "store":
-                return [
+        res = [
                     person
                     for person in self.persons.values()
-                    if person.current_entity == "store"
+                    if person.current_entity == entity_type
                     and person.entity_status == EntityStatus.INLINE
                 ]
-            case "hospital":
-                return [
-                    person
-                    for person in self.persons.values()
-                    if person.current_entity == "hospital"
-                    and person.entity_status == EntityStatus.INLINE
-                ]
-            case "ecu":
-                return [
-                    person
-                    for person in self.persons.values()
-                    if person.current_entity == "ecu"
-                    and person.entity_status == EntityStatus.INLINE
-                ]
-            case _:
-                return []
-    
+        return res
+
     def snapshot(self, entity_id: int) -> Snapshot | bool:
         entity = self.entity_exists(entity_id)
 
         if not entity:
             return False
-        
+
         return Snapshot(
             entity_id, self.match_snapshot_persons(entity), self.earthquake_status
         )
 
-    #==accpet persons=============================================================
-    def validate_person_to_accept(self, entity: Entity, person_id: int)->bool:
+    # ==accpet persons=============================================================
+    def validate_person_to_accept(self, entity: Entity, person_id: int) -> bool:
         person = self.persons.get(person_id)
-        
+
         if not person:
             return False
-        
-        if person.current_entity != entity.entity_type or person.entity_status != EntityStatus.INLINE:
+
+        if (
+            person.current_entity != entity.entity_type
+            or person.entity_status != EntityStatus.INLINE
+        ):
             return False
-        
+
         return True
-    
+
     def accept_person(self, entity_id: int, persons_id: list) -> dict[str, list[int]]:
         entity = self.entity_exists(entity_id=entity_id)
         if not entity:
@@ -105,24 +97,30 @@ class WorldModel:
                     accepted_persons.append(person_id)
             else:
                 rejected_persons.append(person_id)
-                
+
         entity.change_used_capacity(len(accepted_persons))
-        logger.info(f"in accept-person: entity_id: {entity_id} - accepteds: {accepted_persons} - rejecteds: {rejected_persons}")
+        logger.info(
+            f"in accept-person: entity_id: {entity_id} - accepteds: {accepted_persons} - rejecteds: {rejected_persons}"
+        )
         return {"accepted": accepted_persons, "rejected": rejected_persons}
-    #=============================================================================
-    
-    #==service done===============================================================
-    def validate_person_for_service_done(self, entity: Entity, person_id: int)->bool:
+
+    # =============================================================================
+
+    # ==service done===============================================================
+    def validate_person_for_service_done(self, entity: Entity, person_id: int) -> bool:
         person = self.persons.get(person_id)
-        
+
         if not person:
             return False
-        
-        if person.current_entity != entity.entity_type or person.entity_status != EntityStatus.SERVICE:
+
+        if (
+            person.current_entity != entity.entity_type
+            or person.entity_status != EntityStatus.SERVICE
+        ):
             return False
-        
+
         return True
-    
+
     def service_done(self, entity_id: int, persons_id: list) -> dict[str, list[int]]:
         entity = self.entity_exists(entity_id)
         if not entity:
@@ -147,13 +145,14 @@ class WorldModel:
                         person.changeEntity("city")
             else:
                 rejected_persons.append(person_id)
-                
-        
+
         entity.change_used_capacity(-1 * len(accepted_persons))
-        logger.info(f"in service_done: entity_id: {entity_id} - accepteds: {accepted_persons} - rejecteds: {rejected_persons}")
+        logger.info(
+            f"in service_done: entity_id: {entity_id} - accepteds: {accepted_persons} - rejecteds: {rejected_persons}"
+        )
 
         return {"accepted": accepted_persons, "rejected": rejected_persons}
-    #=============================================================================
+    # =============================================================================
 
     def update_self(
         self, entity_id: int, max_capacity: int, eav: dict[str, str | int | dict | list]
@@ -183,7 +182,7 @@ class WorldModel:
         for person_id in persons_id:
             person = self.persons[person_id]
             person.injure()
-            person.changeEntity("ecu")
+            person.changeEntity(EntityEnum.ECU)
             person.changeEntityStatus(EntityStatus.INLINE)
 
         entity = self.entities.get(entity_id)
@@ -192,16 +191,15 @@ class WorldModel:
 
         return True
 
-
     def validate_person_for_person_death(self, entity: Entity, person_id: int) -> bool:
         person = self.persons.get(person_id)
-        
+
         if not person:
             return False
-        
+
         if person.current_entity != entity.entity_type:
             return False
-        
+
         return True
 
     # should check if only hospital or police call can happen
@@ -221,9 +219,10 @@ class WorldModel:
             else:
                 rejected_persons.append(person_id)
 
-
         entity.change_used_capacity(-1 * len(accepted_persons))
-        logger.info(f"in person_death: entity_id: {entity_id} - accepteds: {accepted_persons} - rejecteds: {rejected_persons}")
+        logger.info(
+            f"in person_death: entity_id: {entity_id} - accepteds: {accepted_persons} - rejecteds: {rejected_persons}"
+        )
 
         return {"accepted": accepted_persons, "rejected": rejected_persons}
 
@@ -241,19 +240,17 @@ class WorldModel:
 
         return entity
 
-    
-
     def populate_worldModel(self, persons_count: int = 1):
         for _ in range(persons_count):
             person = Person.generateRandomPerson()
             self.persons[person.id] = person
 
-    def fill_store_line(self, count: int = 1):
+    def fill_entity_line(self, entity: EntityEnum, count: int = 1):
         persons = list(self.persons.values())
         idle_persons = list(
             filter(
                 lambda x: x.entity_status == EntityStatus.IDLE
-                and x.current_entity == "city",
+                and x.current_entity == EntityEnum.CITY,
                 persons,
             )
         )
@@ -261,30 +258,10 @@ class WorldModel:
 
         for _ in range(min(count, idle_persons_count)):
             person = random.choice(idle_persons)
-            person.changeEntity("store")
+            person.changeEntity(entity)
             person.changeEntityStatus(EntityStatus.INLINE)
 
-    def fill_hospital_line(self, count: int = 1):
-        persons = list(self.persons.values())
-        idle_persons = list(
-            filter(
-                lambda x: x.entity_status == EntityStatus.IDLE
-                and x.current_entity == "city",
-                persons,
-            )
-        )
-        idle_persons_count = len(idle_persons)
-
-        for _ in range(min(count, idle_persons_count)):
-            person = random.choice(idle_persons)
-            person.changeEntity("hospital")
-            person.changeEntityStatus(EntityStatus.INLINE)
-
-    def personLog(self):
-        pass
-
-    def entityLog(self):
-        pass
-
-    def log(self):
-        pass
+    def clock(self):
+        now = datetime.now()
+        delta = now - self.start_date
+        return (delta.total_seconds() * self.time_rate) // 1

@@ -2,11 +2,21 @@ from datetime import datetime, timedelta
 import random
 import names
 from src.models.base_model import BaseEntity
-from src.models.enums import Gender, EntityStatus, PersonStatus
+from src.models.enums import Gender, EntityStatus, PersonStatus, EntityEnum
 
 
 class Person(BaseEntity):
-    def __init__(self, name: str, gender: Gender, birth_date: datetime, national_code: str, status: PersonStatus, current_entity: str, entity_status: EntityStatus, death_date=None) -> None:
+    def __init__(
+        self,
+        name: str,
+        gender: Gender,
+        birth_date: datetime,
+        national_code: str,
+        status: PersonStatus,
+        current_entity: EntityEnum,
+        entity_status: EntityStatus,
+        death_date=None,
+    ) -> None:
         super().__init__()
         self.name = name
         self.gender = gender
@@ -30,7 +40,7 @@ class Person(BaseEntity):
         self.death_date = datetime.now()
         self.modified_date = datetime.now()
 
-    def changeEntity(self, destination: str) -> None:
+    def changeEntity(self, destination: EntityEnum) -> None:
         self.current_entity = destination
         self.modified_date = datetime.now()
 
@@ -42,7 +52,7 @@ class Person(BaseEntity):
     def generateRandomPerson():
         genders = list(Gender)
         gender = random.choice(genders)
-        name = names.get_full_name(gender='male' if gender == 'Male' else 'female')
+        name = names.get_full_name(gender="male" if gender == "Male" else "female")
         national_code = str(random.randint(1000000000, 9999999999))
 
         start_date = datetime(1960, 1, 1)
@@ -52,7 +62,15 @@ class Person(BaseEntity):
         random_number_of_days = random.randrange(days_between_dates)
         random_birth_date = start_date + timedelta(days=random_number_of_days)
 
-        return Person(name, gender, random_birth_date, national_code, PersonStatus.ALIVE, 'city', EntityStatus.IDLE)
+        return Person(
+            name,
+            gender,
+            random_birth_date,
+            national_code,
+            PersonStatus.ALIVE,
+            EntityEnum.CITY,
+            EntityStatus.IDLE,
+        )
 
     def __str__(self) -> str:
         return (
@@ -68,7 +86,3 @@ class Person(BaseEntity):
             f"Modified Date: {self.modified_date.strftime('%Y-%m-%d %H:%M:%S')}\n"
             f"Death Date: {self.death_date.strftime('%Y-%m-%d %H:%M:%S') if self.death_date else 'N/A'}"
         )
-
-
-class PersonLog:
-    pass

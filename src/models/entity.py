@@ -1,13 +1,14 @@
 from datetime import datetime
 from src.models.base_model import BaseEntity
+from src.models.enums import EntityEnum
 
 
 class Entity(BaseEntity):
-    def __init__(self, entity_type: str, max_capacity: int) -> None:
+    def __init__(self, entity_type: EntityEnum, max_capacity: int) -> None:
         super().__init__()
-        self.entity_type = entity_type.lower()
-        self.max_capacity = max_capacity
-        self.used_capacity = 0
+        self.entity_type: EntityEnum = entity_type
+        self.max_capacity: int = max_capacity
+        self.used_capacity: int = 0
 
     def change_used_capacity(self, change: int = 1) -> None:
         self.used_capacity += change

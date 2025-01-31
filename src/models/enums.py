@@ -6,6 +6,13 @@ class PersonStatus(Enum):
     INJURED = 'injured'
     DEAD = 'dead'
 
+class EntityEnum(Enum):
+    STORE = 'store'
+    HOSPITAL = 'hostpital'
+    ECU = 'ecu'
+    CITY = 'city'
+    
+
 
 class EntityStatus(Enum):
     INLINE = 'inline'

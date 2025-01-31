@@ -34,4 +34,4 @@ class PersonDeathBody(AcceptPersonBody):
 class UpdateSelfBody(BaseModel):
     entity_id: int
     max_capacity: int
-    eav: dict[str, str | int]
+    eav: dict[str, str | int | dict | list]

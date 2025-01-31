@@ -2,8 +2,10 @@ from contextlib import asynccontextmanager
 from typing import AsyncIterator, TypedDict
 from fastapi import FastAPI
 from src.api.routes import router
+from src.models.enums import EntityEnum
 from src.models.world_model import WorldModel
 from src.utils.logger import get_logger
+import src.config as config
 
 # Configure the root logge
 
@@ -20,14 +22,11 @@ async def lifespan(app: FastAPI) -> AsyncIterator[State]:
     logger.info("Setting up application dependencies...")
 
     # create world model
-    world_model = WorldModel(1)
-    logger.info("world created with time rate of 1")
-    world_model.populate_worldModel(12)
-    logger.info("world populated with 12 persons")
-    world_model.fill_store_line(5)
-    world_model.fill_hospital_line(2)
-    logger.info("5 persons where sent to store line")
-    logger.info("2 persons where sent to hospital line")
+    world_model = WorldModel(config.TIME_RATE)
+    world_model.populate_worldModel(config.INITIAL_POPULATION)
+    world_model.fill_entity_line(EntityEnum.HOSPITAL, config.INITIAL_HOSPITAL_LINE)
+    world_model.fill_entity_line(EntityEnum.ECU, config.INITIAL_ECU_LINE)
+    world_model.fill_entity_line(EntityEnum.STORE, config.INITIAL_STORE_LINE)
 
     # return dependencies
     yield {"world_model": world_model}

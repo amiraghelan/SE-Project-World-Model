@@ -17,6 +17,7 @@ class WorldModel:
         self.eavs: dict[int, list[EntityAttributeValue]] = dict()
         self.persons: dict[int, Person] = dict()
         self.start_date = datetime.now()
+        logger.info(f"world_model created at {self.start_date} with time_rate = {self.time_rate}")
 
     # ==register====================================================================
     def register(
@@ -244,8 +245,10 @@ class WorldModel:
         for _ in range(persons_count):
             person = Person.generateRandomPerson()
             self.persons[person.id] = person
+        logger.info(f"world_model populated with {persons_count} persons")
 
     def fill_entity_line(self, entity: EntityEnum, count: int = 1):
+        logger.info(f"trying to fill {entity.value} line with {count} persons")
         persons = list(self.persons.values())
         idle_persons = list(
             filter(
@@ -255,11 +258,13 @@ class WorldModel:
             )
         )
         idle_persons_count = len(idle_persons)
-
+        c = 0
         for _ in range(min(count, idle_persons_count)):
             person = random.choice(idle_persons)
             person.changeEntity(entity)
             person.changeEntityStatus(EntityStatus.INLINE)
+            c+=1
+        logger.info(f"{entity.value} line filled with {c} persons")
 
     def clock(self):
         now = datetime.now()
